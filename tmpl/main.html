@@ -1,0 +1,223 @@
+{{/*
+  extends: base.html
+*/}}
+{{ define "main" }}
+<div class="site-header">
+  <h1 class="site-title">Governator</h1>
+  <p class="lead site-description">A simple user process manager.</p>
+  <iframe frameBorder="0" class="github-btn" src="http://ghbtns.com/github-btn.html?user=rainycape&amp;repo=governator&amp;type=watch&amp;count=true" width="100" height="20" title="Star on GitHub"></iframe> 
+  <iframe frameBorder="0" class="github-btn" src="http://ghbtns.com/github-btn.html?user=rainycape&amp;repo=governator&amp;type=fork&amp;count=true" width="102" height="20" title="Fork on GitHub"></iframe>
+</div>
+
+<div class="row">
+
+  <div class="col-sm-12 site-main">
+
+    <div class="site-post" id="install">
+      <h2 class="site-post-title">Install</h2>
+      <pre><code>curl http://governator.io/install.sh | sudo sh</code></pre>
+      <p>or, if curl is not installed in your system:</p>
+      <pre><code>wget http://governator.io/install.sh -O - | sudo sh</code></pre>
+      <hr>
+      <h3>Manual installation</h3>
+      <p>Download the latest governator release from:</p>
+      <pre><code>http://governator.io/get/releases/linux/x86_64/latest/governator</code></pre>
+      <p>Create the default configuration directory:</p>
+      <pre><code>mkdir -p /etc/governator/services</code></pre>
+      <p>
+        Then, move the binary to somewhere in your $PATH (/usr/local/bin is usually a good place)
+        and add the governator daemon to your init sequence. Keep in mind that the daemon must be run
+        as root. To start in daemon mode, use the <em>-D</em> command line flag (otherwise, governator
+        will start in client mode and try to connect to the daemon).
+      </p>
+    </div><!-- /.site-post -->
+
+    <div class="site-post" id="services">
+      <h2 class="site-post-title">Adding services</h2>
+      <p>
+        Governator uses a very simple format for each service. Service files are stored in the <em>services</em>
+        directory inside the main governator configuration directory (by default, /etc/governator). Each file
+        contains a mandatory field and several optional fields.
+      </p>
+      <ul>
+        <li>
+            <h3>command</h3>
+            <p>
+              The only mandatory field. The command to execute, with any additional arguments. If might be either
+              an absolute path or just the binary. The $PATH is searched for the binary in the latter case.
+        </li>
+        <li>
+            <h3>name</h3>
+            <p>
+              The service name used to control the process as well as the basename for its log files. If empty or
+              not present, defaults to the same name that the file.
+            </p>
+        </li>
+        <li>
+            <h3>dir</h3>
+            <p>
+              The working directory for the service. If empty or not present, defaults to the directory which contains
+              the service command (e.g. /home/www/web will run in /home/www).
+            </p>
+        </li>
+        <li>
+            <h3>environment</h3>
+            <p>
+              Environment variables to pass to the command, in the format <em>var1=value1; var2=value2; ...</em>. If any
+              variable name or value has spaces, it can be quoted with " or '.
+            </p>
+            <blockquote>
+              Note for Go applications: If the environment variable <em>GOMAXPROCS</em> is not defined, governator will
+              set it to the number of CPUs in the system, as reported by runtime.NumCPU() by Go.
+            </blockquote>
+        </li>
+        <li>
+            <h3>user</h3>
+            <p>
+              The primary user id of the process. By default, it's the owner of the binary.
+            </p>
+        </li>
+        <li>
+            <h3>group</h3>
+            <p>
+              The primary group id of the process. By default, it's the owner group of the binary.
+            </p>
+        </li>
+        <li>
+            <h3>priority</h3>
+            <p>
+              The priority for the service, relative to other services. Services with lower priority are
+              started first and stopped last. By default, it's 1000.
+            </p>
+        </li>
+        <li>
+            <h3>watchdog</h3>
+            <p>
+              Watchdog to check that the service is responsive. This allows restarting a service not only
+              when it exits unexpectecly, but also when it gets stuck. The watchdog is ran periodically and if
+              it returns an error, the service is restarted. For more information about the available watchdogs
+              and its syntax, check the <a href="#watchdogs">Watchdogs</a> section.
+            </p>
+        </li>
+        <li>
+            <h3>watchdog_interval</h3>
+            <p>
+              The number of seconds between each watchdog check. By default, it's 300 (5 minutes).
+            </p>
+        </li>
+      </ul>
+      <hr>
+      <p>A service file can be as simple as just a command:</p>
+      <pre><code># /etc/governator/services/myservice
+command = /home/myuser/mycommand</code></pre>
+
+      <p>Or something more complex, like:</p>
+      <pre><code># /etc/governator/services/mycomplexservice
+command = /home/www/webapp --port=8888
+dir = /
+environment = PATH=/usr/bin/:/usr/sbin;VARIABLE=value
+user = nobody
+group = nogroup
+priority = 100
+watchdog = get http://127.0.0.1:8888
+watchdog_interval = 60</code></pre>
+      <p>
+        Governator <strong>monitors its services directory and reloads service files automatically</strong>,
+        so modifying, adding or removing a service file causes the service to be restarted, started or stopped,
+        respectivelly, without restarting governator. Note that overwriting a file with the same contents does
+        not cause a service restart, because governator checks if the configuration actually changed before
+        reloading the service.
+      </p>
+    </div><!-- /.site-post -->
+    <div class="site-post" id="watchdogs">
+      <h2 class="site-post-title">Watchdogs</h2>
+      <p>
+        Watchdogs allow governator to detect when a service has got stuck and restart it. They're completely
+        optional, but they are very useful in a lot of situations.
+      </p>
+      <p>Governator supports the following types of watchdogs:</p>
+      <ul>
+       <li>
+        <h3>run</h3>
+        <p>
+          The <em>run</em> watchdog executes a command and, if it exists with non-zero status, it considers
+          it an error. Additional arguments for the watchdog command might also be provided.
+        </p>
+        <pre><code>watchdog = myappcheck --port=5000</code></pre>
+       </li>
+       <li>
+        <h3>connect</h3>
+        <p>
+          The <em>connect</em> watchdog connects to the given host and port using TCP. If the connection can't be
+          correctly established, it reports an error. The host might be an IP or a hostname.
+        </p>
+        <pre><code>watchdog = connect 127.0.0.1:3000</code></pre>
+        <pre><code>watchdog = connect myserver.example.com:12345</code></pre>
+       </li>
+       <li>
+        <h3>get</h3>
+        <p>
+          The <em>get</em> watchdog requests the given URL using GET. If the request fails or if the server returns
+          a non-200 status code, it reports an error. This watchdog also allows a second parameter, to specify the
+          timeout. Otherwise, the timeout is 60 seconds.
+        </p>
+        <pre><code>watchdog = get http://127.0.0.1:8888 # default timeout</code></pre>
+        <pre><code>watchdog = get http://www.example.com 10 # 10 seconds timeout</code></pre>
+       </li>
+      </ul>
+    </div><!-- /.site-post -->
+    <div class="site-post" id="command line">
+      <h2 class="site-post-title">Command Line</h2>
+      <p>
+        To start governator as a client, start it as root and with no arguments. The server must be already running before
+        starting the client. You should see something like this:
+      </p>
+      <pre><code>$ governator 
+governator interactive shell
+Type exit or press control+d to end
+Type help to show available commands
+
+SERVICE      STATUS                               
+subtitles    RUNNING since 2014-02-17 13:02:07    
+
+governator&gt;</code></pre> 
+      <p>
+        From the interactive console, you can use the <em>help</em> command to list all available commands. Currently, they are:
+      </p>
+      <pre><code>start &lt;service&gt;   : starts a service
+stop &lt;service&gt;    : stops a service
+restart &lt;service&gt; : restart
+list              : list registered services
+exit              : close the shell
+help              : show help</code></pre>
+      <p>
+        Additionally, governator also accepts any of these arguments from directly the command line, e.g.:
+      </p>
+      <pre><code>governartor list</pre></code>
+      <pre><code>governartor start myservice # start myservice if it's not already running</pre></code>
+      <p>
+        When the command is provided in the command line, governator will exit with code 0 in case of
+        success and code 1 in case of failure. Note that stopping an already stopped service or starting
+        a service which is already running is not considered an error.
+      </p>
+      <hr>
+      <h3>Allowing non-root users to control services</h3>
+      <p>
+        Governator uses a unix socket to communicate between the server and the client. By default,
+        the socket is owned by root and unprivileged users can't write to it. However,
+        if the group <em>governator</em> is present, the daemon will set the ownership of the socket
+        to that group and it will set the permissions so users in that group can communicate with
+        the server.
+      </p>
+      <p>Create the governator group:</p>
+      <pre><code>sudo groupadd governator # restart governator if it's already running</code></pre>
+      <p>Add a user to the governator group:</p>
+      <pre><code>sudo usermod -a -G governator some-user</code></pre>
+      <blockquote>
+        Note that any allowed user can stop and start any service, but can't add new ones.
+        Use this feature with care.
+      </blockquote>
+    </div><!-- /.site-post -->
+  </div><!-- /.site-main -->
+</div><!-- /.row -->
+{{ end }}

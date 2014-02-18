@@ -1,0 +1,41 @@
+{{/*
+  jquery|if=~ie-gte-9: 2.0.3
+  jquery|if=ie: 1.10.2
+  bootstrap|fontawesome=4.0.3: 3.1.1
+  styles: css/style.css
+  #analytics|nodebug: {{ @Config.Analytics }}
+*/}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Rainy Cape S.L.">
+    <title>Governator: A simple user process manager</title>
+  </head>
+  <body>
+
+    <div class="site-masthead">
+      <div class="container">
+        <nav class="site-nav">
+          <a class="site-nav-item active" href="#">Home</a>
+          <a class="site-nav-item" href="#install">Install</a>
+          <a class="site-nav-item" href="#services">Adding services</a>
+          <a class="site-nav-item" href="#watchdogs">Watchdogs</a>
+          <a class="site-nav-item" href="#command-line">Command Line</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      {{ template "main" . }}
+    </div><!-- /.container -->
+    <div class="site-footer">
+      <p>&copy; 2014 <a href="http://rainycape.com">Rainy Cape</a></p>
+      <p>
+        <a href="#">Back to top</a>
+      </p>
+    </div>
+  </body>
+</html>
