@@ -13,6 +13,7 @@ var (
 	deps = []string{}
 	dirs = []string{
 		"assets",
+		"data",
 		"tmpl",
 	}
 )
