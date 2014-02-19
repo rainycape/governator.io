@@ -36,6 +36,7 @@ h6, .h6 {
  */
 
 .site-masthead {
+  height: 50px;
   position: fixed;
   top: 0;
   left: 0;
@@ -57,6 +58,17 @@ h6, .h6 {
 .site-nav-item:focus {
   color: #fff;
   text-decoration: none;
+}
+
+.nav >li >a:hover {
+    background: none;
+}
+
+.jumptarget:before {
+  content:"";
+  display:block;
+  height:50px; /* fixed header height*/
+  margin:-50px 0 0; /* negative fixed header height */
 }
 
 /* Active state gets a caret at the bottom */
