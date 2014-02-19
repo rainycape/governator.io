@@ -36,8 +36,13 @@ h6, .h6 {
  */
 
 .site-masthead {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   background-color: #428bca;
   box-shadow: inset 0 -2px 5px rgba(0,0,0,.1);
+  z-index: 100;
 }
 
 /* Nav links */
