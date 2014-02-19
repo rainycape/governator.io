@@ -4,7 +4,7 @@
 {{ define "main" }}
 <div class="site-header">
   <h1 class="site-title">Governator</h1>
-  <p class="lead site-description">A simple user process manager.</p>
+  <p class="lead site-description">An effective process manager for UNIX systems.</p>
   <iframe frameBorder="0" class="github-btn" src="http://ghbtns.com/github-btn.html?user=rainycape&amp;repo=governator&amp;type=watch&amp;count=true" width="100" height="20" title="Star on GitHub"></iframe> 
   <iframe frameBorder="0" class="github-btn" src="http://ghbtns.com/github-btn.html?user=rainycape&amp;repo=governator&amp;type=fork&amp;count=true" width="102" height="20" title="Fork on GitHub"></iframe>
 </div>
@@ -12,7 +12,15 @@
 <div class="row">
 
   <div class="col-sm-12 site-main">
-
+    <div class="site-post">
+      <p>
+        Governator is not designed as an init replacement. Instead, governator provides
+        features which are intended to help running applications developed by yourself, like
+        automatic restarts, watchdogs and logging. A typical use use case is running web
+        applications which need their own process. Note that governator itself should be started
+        from init, like any other daemon.
+      </p>
+    </div>
     <div class="site-post" id="install">
       <h2 class="site-post-title">Install</h2>
       <pre><code>curl http://governator.io/install.sh | sudo sh</code></pre>
@@ -34,32 +42,30 @@
       <h2 class="site-post-title">Adding services</h2>
       <p>
         Governator uses a very simple format for each service. Service files are stored in the <em>services</em>
-        directory inside the main governator configuration directory (by default, /etc/governator). Each file
-        contains a mandatory field and several optional fields.
+        directory inside the main governator configuration directory (by default, /etc/governator so services
+        are in /etc/governator/services). Each file contains a mandatory field and several optional fields.
       </p>
       <ul>
         <li>
-            <h3>command</h3>
+          {{ config "command" "" }}
             <p>
               The only mandatory field. The command to execute, with any additional arguments. If might be either
-              an absolute path or just the binary. The $PATH is searched for the binary in the latter case.
+              an absolute path or just the binary name. $PATH is searched for the binary in the latter case.
         </li>
         <li>
-            <h3>name</h3>
+          {{ config "name" "service file name (e.g. /etc/governator/services/myservice defaults to \"myservice\")" }}
             <p>
-              The service name used to control the process as well as the basename for its log files. If empty or
-              not present, defaults to the same name that the file.
+              The service name used to control the process as well as the basename for its log files.
             </p>
         </li>
         <li>
-            <h3>dir</h3>
+            {{ config "dir" "directory which contains the service command (e.g. /home/www/web will run in /home/www)" }}
             <p>
-              The working directory for the service. If empty or not present, defaults to the directory which contains
-              the service command (e.g. /home/www/web will run in /home/www).
+              The working directory for the service.
             </p>
         </li>
         <li>
-            <h3>environment</h3>
+            {{ config "environment" "none" }}
             <p>
               Environment variables to pass to the command, in the format <em>var1=value1; var2=value2; ...</em>. If any
               variable name or value has spaces, it can be quoted with " or '.
@@ -70,26 +76,32 @@
             </blockquote>
         </li>
         <li>
-            <h3>user</h3>
+            {{ config "user" "owner of the binary declared in command" }}
             <p>
-              The primary user id of the process. By default, it's the owner of the binary.
+              The primary user id of the process.
             </p>
         </li>
         <li>
-            <h3>group</h3>
+            {{ config "group" "group owner of the binary declared in command" }}
             <p>
-              The primary group id of the process. By default, it's the owner group of the binary.
+              The primary group id of the process.
             </p>
         </li>
         <li>
-            <h3>priority</h3>
+            {{ config "priority" "1000" }}
             <p>
               The priority for the service, relative to other services. Services with lower priority are
-              started first and stopped last. By default, it's 1000.
+              started first and stopped last.
             </p>
         </li>
         <li>
-            <h3>watchdog</h3>
+            {{ config "log" "file" }}
+            <p>
+              The logging system to use for this service. See the <a href="#logging">Logging</a> section
+              for more information.
+            </p>
+        <li>
+            {{ config "watchdog" "none" }}
             <p>
               Watchdog to check that the service is responsive. This allows restarting a service not only
               when it exits unexpectecly, but also when it gets stuck. The watchdog is ran periodically and if
@@ -98,9 +110,9 @@
             </p>
         </li>
         <li>
-            <h3>watchdog_interval</h3>
+            {{ config "watchdog_interval" "300" }}
             <p>
-              The number of seconds between each watchdog check. By default, it's 300 (5 minutes).
+              The number of seconds between each watchdog check.
             </p>
         </li>
       </ul>
@@ -117,6 +129,7 @@ environment = PATH=/usr/bin/:/usr/sbin;VARIABLE=value
 user = nobody
 group = nogroup
 priority = 100
+log = syslog
 watchdog = get http://127.0.0.1:8888
 watchdog_interval = 60</code></pre>
       <p>
@@ -164,7 +177,59 @@ watchdog_interval = 60</code></pre>
        </li>
       </ul>
     </div><!-- /.site-post -->
-    <div class="site-post" id="command line">
+    <div class="site-post" id="logging">
+      <h2 class="site-post-title">Logging</h2>
+      <p>
+        Governator generates a log for each service, combining stdout, stderr and any events related
+        to that service. The <em>log</em> configuration directive allows setting where the log for each
+        service is stored. The following options are available:
+      </p>
+      <ul>
+        <li>
+          <h3>file</h3>
+          <p>
+            The <em>file</em> logger writes the log for the service to a log file, located in
+            <em>/var/log/governator/&lt;service-name&gt;</em>. Its syntax is:
+          </p>
+          <pre><code>log = file [rotate-size] [rotate-count]</code></pre>
+          <p>
+            <em>rotate-size</em> and <em>rotate-count</em> are optional. If they are not provided,
+            they default to 512MiB and 10, respectivelly. When the log reaches rotate-size it will
+            be rotated and compressed with gzip, generating /var/log/governator/&lt;service-name&gt;.1.log.
+            As many as <em>rotate-count</em> log files will be kept. When the maximum number is reached, the
+            oldest file will be deleted when rotating the log.
+          </p>
+          <p>
+            <em>rotate-size</em> allows the following suffixes:
+          </p>
+          <pre><code>K, KB: kilobytes
+M, MB: megabytes
+G, GB: gigabytes
+T, TB: terabytes</code></pre>
+          <p>These are all valid examples:</p>
+          <pre><code>log = file 1.5G 20 # rotate after 1.5 GiB, keep 20 files</code></pre>
+          <pre><code>log = file 300MB # rotate after 300MB, keep 10 files</code></pre>
+        </li>
+        <li>
+          <h3>syslog</h3>
+          <p>The <em>syslog</em> logger sends the log to a syslog daemon, either local or remote. Its syntax is:</p>
+          <pre><code>log = syslog [remote-url]</code></pre>
+          <p>
+            If no remote URL is provided, logs will be sent to the syslog daemon running in the local host. If the URL
+            is provided, it must have the following syntax:
+          </p>
+          <pre><code>[tcp|udp|unix|unixgram]://host[:port]</code></pre>
+          <p>
+            All messages will be sent with the <em>LOG_LOCAL0</em> facility. Severity will vary depending on the type
+            of message.
+          </p>
+          <p>These are all valid examples:</p>
+          <pre><code>log = syslog # log to the local syslog daemon</code></pre>
+          <pre><code>log = tcp://logserver.example.com # send logs to syslog at logserver.example.com</code></pre>
+        </li>
+      </ul>
+    </div><!-- /.site-post -->
+    <div class="site-post" id="command-line">
       <h2 class="site-post-title">Command Line</h2>
       <p>
         To start governator as a client, start it as root and with no arguments. The server must be already running before
@@ -176,7 +241,7 @@ Type exit or press control+d to end
 Type help to show available commands
 
 SERVICE      STATUS                               
-subtitles    RUNNING since 2014-02-17 13:02:07    
+myservice    RUNNING since 2014-02-17 13:02:07    
 
 governator&gt;</code></pre> 
       <p>
@@ -189,10 +254,10 @@ list              : list registered services
 exit              : close the shell
 help              : show help</code></pre>
       <p>
-        Additionally, governator also accepts any of these arguments from directly the command line, e.g.:
+        Additionally, governator also accepts any of these arguments directly from the command line, e.g.:
       </p>
-      <pre><code>governartor list</pre></code>
-      <pre><code>governartor start myservice # start myservice if it's not already running</pre></code>
+      <pre><code>governator list</pre></code>
+      <pre><code>governator start myservice # start myservice if it's not already running</pre></code>
       <p>
         When the command is provided in the command line, governator will exit with code 0 in case of
         success and code 1 in case of failure. Note that stopping an already stopped service or starting

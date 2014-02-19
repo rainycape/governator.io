@@ -149,6 +149,24 @@ h6, .h6 {
   color: #999;
 }
 
+/*
+ * Config
+ */
+
+.config {
+}
+
+.config .label {
+    font-size: 12px;
+    position: relative;
+    top: -3px;
+}
+
+.config .default {
+        color: #999;
+        font-size: 16px;
+}
+
 
 /*
  * Footer
