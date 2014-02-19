@@ -1,12 +1,12 @@
 {{/*
   extends: base.html
+  include: buttons.html
 */}}
 {{ define "main" }}
 <div class="site-header">
   <h1 class="site-title">Governator</h1>
   <p class="lead site-description">An effective process manager for UNIX systems.</p>
-  <iframe frameBorder="0" class="github-btn" src="http://ghbtns.com/github-btn.html?user=rainycape&amp;repo=governator&amp;type=watch&amp;count=true" width="100" height="20" title="Star on GitHub"></iframe> 
-  <iframe frameBorder="0" class="github-btn" src="http://ghbtns.com/github-btn.html?user=rainycape&amp;repo=governator&amp;type=fork&amp;count=true" width="102" height="20" title="Fork on GitHub"></iframe>
+  {{ template "buttons.html" . }}
 </div>
 
 <div class="row">
