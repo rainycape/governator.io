@@ -65,15 +65,21 @@
             </p>
         </li>
         <li>
-            {{ config "environment" "none" }}
+            {{ config "env" "none" }}
             <p>
-              Environment variables to pass to the command, in the format <em>var1=value1; var2=value2; ...</em>. If any
-              variable name or value has spaces, it can be quoted with " or '.
+              Environment variables to pass to the command, in the format <em>var1=value1, var2=value2, ...</em>. If any
+              variable name or value contains spaces or the ',' character, it can be quoted with " or '.
             </p>
             <blockquote>
               Note for Go applications: If the environment variable <em>GOMAXPROCS</em> is not defined, governator will
               set it to the number of CPUs in the system, as reported by runtime.NumCPU() by Go.
             </blockquote>
+        </li>
+        <li>
+            {{ config "start" "true" }}
+            <p>
+              Wheter to automatically start the service when governator starts.
+            </p>
         </li>
         <li>
             {{ config "user" "owner of the binary declared in command" }}
@@ -160,17 +166,18 @@ watchdog_interval = 60</code></pre>
         <h3>connect</h3>
         <p>
           The <em>connect</em> watchdog connects to the given host and port using TCP. If the connection can't be
-          correctly established, it reports an error. The host might be an IP or a hostname.
+          correctly established, it reports an error. The host might be an IP or a hostname. This watchdog also
+          allows a second parameter, to specify the timeout. The default timeout is 30 seconds.
         </p>
-        <pre><code>watchdog = connect 127.0.0.1:3000</code></pre>
-        <pre><code>watchdog = connect myserver.example.com:12345</code></pre>
+        <pre><code>watchdog = connect tcp://127.0.0.1:3000</code></pre>
+        <pre><code>watchdog = connect tcp://myserver.example.com:12345 10 # 10 seconds timeout</code></pre>
        </li>
        <li>
         <h3>get</h3>
         <p>
           The <em>get</em> watchdog requests the given URL using GET. If the request fails or if the server returns
           a non-200 status code, it reports an error. This watchdog also allows a second parameter, to specify the
-          timeout. Otherwise, the timeout is 60 seconds.
+          timeout. The default timeout is 30 seconds.
         </p>
         <pre><code>watchdog = get http://127.0.0.1:8888 # default timeout</code></pre>
         <pre><code>watchdog = get http://www.example.com 10 # 10 seconds timeout</code></pre>
