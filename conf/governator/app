@@ -1,2 +1,0 @@
-name = {{ .Vars.App }}
-command = {{ .Pwd }}/{{ .Vars.App }}

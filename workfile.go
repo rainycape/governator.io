@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"workbot.io/contrib/governator"
+	"workbot.io/contrib/nginx"
 	"workbot.io/wb"
 )
 
@@ -33,17 +34,20 @@ func BeforeDeploy(s *wb.Session) {
 
 func Deploy(s *wb.Session) {
 	s.Install(deps)
-	app, _ := s.StringVar("App")
+	app, _ := s.StringVar("app")
 	s.PushDir(app)
-	s.UploadFile(app, "")
+	s.Upload(app, "")
 	g := governator.New(s)
 	__ = g.Stop(app)
 	s.Sync(dirs...)
-	s.UploadTemplateFile("conf/governator/app", "/etc/governator/"+app)
-	s.UploadTemplateFile("conf/nginx/nginx.conf", "/etc/nginx/conf.d/"+app)
-	s.UploadTemplateFile("conf/nginx/site.conf", "/etc/nginx/"+app)
-	s.UploadTemplateFile("app.conf", "")
+	s.UploadTemplate("app.conf", "")
+	g.AddService(app, nil, app)
 	g.Start(app)
+	n, _ := nginx.New(s)
+	port, _ := s.StringVar("port")
+	n.AddServer(app, "127.0.0.1:"+port)
+	n.AddSite(app, wb.Template("conf/nginx/site.conf"))
+	n.StartSite(app)
 }
 
 func init() {
@@ -53,6 +57,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	wb.Var("App", filepath.Base(dir), "Application binary")
-	wb.AddContextFile("app.conf")
+	wb.Var("app", filepath.Base(dir), "Application binary")
+	wb.AddVars("app.conf")
 }
