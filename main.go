@@ -8,7 +8,7 @@ import (
 	"gnd.la/config"
 	"gnd.la/html"
 	"gnd.la/template"
-	"gnd.la/util"
+	"gnd.la/util/pathutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,7 +18,7 @@ import (
 var (
 	Config config.Config
 	App    *app.App
-	data   = util.RelativePath("data")
+	data   = pathutil.Relative("data")
 )
 
 func fileHandler(name string) app.Handler {
@@ -55,7 +55,7 @@ func init() {
 	config.MustParse(&Config)
 	App = app.New()
 	App.SetTrustXHeaders(true)
-	App.HandleAssets("/assets/", util.RelativePath("assets"))
+	App.HandleAssets("/assets/", pathutil.Relative("assets"))
 	App.Handle("^/$", app.TemplateHandler("main.html", nil))
 	App.Handle("^/install\\.sh$", fileHandler("install.sh"))
 	App.Handle("^/get/releases/linux/x86_64/latest/governator$", fileHandler("governator"))
