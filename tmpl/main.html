@@ -121,6 +121,14 @@
               The number of seconds between each watchdog check.
             </p>
         </li>
+        <li>
+            {{ config "max_open_files" "0" }}
+            <p>
+              The maximum number of files that can be opened by the service. If this value is not greater
+              than zero, the maximum number of open files is not altered and it inherits the default
+              system value.
+            </p>
+        </li>
       </ul>
       <hr>
       <p>A service file can be as simple as just a command:</p>
