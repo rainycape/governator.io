@@ -55,6 +55,12 @@ func init() {
 	config.MustParse()
 	App = app.New()
 	App.SetTrustXHeaders(true)
+
+	// Redirect all other possible hosts to governator.io
+	redir := app.RedirectHandler("http://governator.io${0}", true)
+	App.HandleOptions("(.*)", redir, &app.HandlerOptions{Host: "governator-io.appspot.com"})
+	App.HandleOptions("(.*)", redir, &app.HandlerOptions{Host: "www.governator.io"})
+
 	App.HandleAssets("/assets/", pathutil.Relative("assets"))
 	App.Handle("^/$", app.TemplateHandler("main.html", nil))
 	App.Handle("^/install\\.sh$", fileHandler("install.sh"))
