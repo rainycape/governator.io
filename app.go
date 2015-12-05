@@ -63,7 +63,8 @@ func init() {
 
 	App.HandleAssets("/assets/", pathutil.Relative("assets"))
 	App.Handle("^/$", app.TemplateHandler("main.html", nil))
-	App.Handle("^/install\\.sh$", fileHandler("install.sh"))
+	App.Handle("^/install\\.sh$", fileHandler("contrib/install.sh"))
 	App.Handle("^/get/releases/linux/x86_64/latest/governator$", fileHandler("governator"))
-	App.Handle("^/contrib/upstart/governator.conf$", fileHandler("governator.conf"))
+
+	App.HandleAssets("/contrib/", pathutil.Relative("data/contrib"))
 }
