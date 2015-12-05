@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"gnd.la/app"
-	_ "gnd.la/bootstrap"
 	"gnd.la/config"
+	_ "gnd.la/frontend/bootstrap"
 	"gnd.la/html"
 	"gnd.la/template"
 	"gnd.la/util/pathutil"
@@ -58,8 +58,8 @@ func init() {
 
 	// Redirect all other possible hosts to governator.io
 	redir := app.RedirectHandler("http://governator.io${0}", true)
-	App.HandleOptions("(.*)", redir, &app.HandlerOptions{Host: "governator-io.appspot.com"})
-	App.HandleOptions("(.*)", redir, &app.HandlerOptions{Host: "www.governator.io"})
+	App.Handle("(.*)", redir, app.HostHandler("governator-io.appspot.com"))
+	App.Handle("(.*)", redir, app.HostHandler("www.governator.io"))
 
 	App.HandleAssets("/assets/", pathutil.Relative("assets"))
 	App.Handle("^/$", app.TemplateHandler("main.html", nil))
